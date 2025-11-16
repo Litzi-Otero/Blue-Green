@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"  # Accede a http://localhost:8080
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - blue
+      - green
+    restart: unless-stopped
+
+  blue:
+    image: simple-react-app:v1  # Versión actual (live)
+    expose:
+      - "80"
+
+  green:
+    image: simple-react-app:v2  # Nueva versión (staging)
+    expose:
+      - "80"
