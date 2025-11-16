@@ -9,22 +9,20 @@ RUN npm ci --only=production=false
 COPY . .
 RUN npm run build && echo "Version: ${VERSION}" > build/version.txt
 
-# Etapa 2: Nginx
+# Etapa 2: Nginx (sin envsubst, config fija)
 FROM nginx:alpine
-# Instala gettext para envsubst (expande vars en conf)
-RUN apk add --no-cache gettext
+# No necesita gettext
 
 # Copia build de React
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copia template de config (con placeholder ${PORT})
-COPY nginx.template.conf /etc/nginx/nginx.template.conf
+# Copia config fija
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Expone puerto dinámico
-EXPOSE ${PORT:-8080}
+# No EXPOSE (Cloud Run ignora, pero para docs)
+# EXPOSE 8080  # Comenta o quita, como sugieren en foros para evitar conflictos
 
-# Label
 LABEL version=${VERSION}
 
-# CMD: Expande $PORT en conf y arranca Nginx
-CMD ["sh", "-c", "envsubst '${PORT}' < /etc/nginx/nginx.template.conf > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
+# CMD estándar de Nginx
+CMD ["nginx", "-g", "daemon off;"]
