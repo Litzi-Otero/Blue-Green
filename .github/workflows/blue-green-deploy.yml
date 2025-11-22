@@ -17,7 +17,7 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Run tests
-        run: npm test  # Si no tienes tests, cambia a 'npm run build' para validar
+        run: npm test  # O comenta si falla
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.IMAGE_NAME }}:${{ github.sha }}  # Tag único por commit
+          tags: $$ {{ secrets.IMAGE_NAME }}: $${{ github.sha }}
 
   deploy-green:
     runs-on: ubuntu-latest
@@ -46,13 +46,13 @@ jobs:
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}  # Cambia a DO_PASSWORD si usas password
+          password: ${{ secrets.DO_PASSWORD }}  # Fix: Usa DO_PASSWORD
           script: |
-            cd /root/Blue-Green  # Carpeta del proyecto en VPS
-            IMAGE=${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+            cd /root/Blue-Green  # Carpeta en VPS
+            IMAGE=$$ {{ secrets.IMAGE_NAME }}: $${{ github.sha }}
             APP_VERSION=${{ github.sha }}
             git pull  # Actualiza código
             docker pull $IMAGE  # Pull nueva imagen
-            ./scripts/deploy-green.sh $IMAGE $APP_VERSION  # Deploy a Green (ajusta si tu script toma args)
-            ./scripts/switch.sh  # Switch tráfico a Green
+            ./scripts/deploy-green.sh $IMAGE $APP_VERSION  # Deploy Green
+            ./scripts/switch.sh  # Switch tráfico
             echo "Switch completado en VPS! URL: http://143.198.23.14"
