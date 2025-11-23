@@ -41,30 +41,18 @@ jobs:
             ${{ secrets.IMAGE_NAME }}:v2
 
   deploy:
-  runs-on: ubuntu-latest
-  needs: build
+    runs-on: ubuntu-latest
+    needs: build
 
-  steps:
-    - name: Deploy to VPS (Blue-Green)
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.DO_HOST }}
-        username: ${{ secrets.DO_USER }}
-        key: ${{ secrets.DO_SSH_KEY }}
-        script: |
-          cd /root/Blue-Green
-
-          echo "🔄 1) Pull de imágenes"
-          docker compose pull
-
-          echo "🛑 2) Deteniendo contenedor GREEN"
-          docker compose stop green || true
-          docker compose rm -f green || true
-
-          echo "🚀 3) Levantando nueva versión GREEN"
-          docker compose up -d green
-
-          echo "♻️ 4) Recargando Nginx"
-          docker compose exec nginx nginx -s reload || true
-
-          echo "✅ Deploy completado"
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /root/Blue-Green
+            docker compose pull
+            docker compose up -d
+            echo "Deploy completo!"
