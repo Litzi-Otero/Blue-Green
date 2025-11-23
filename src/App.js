@@ -12,7 +12,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Bienvenido a mi App - Litzi Otero</h1>
-        <p>Versión: <span className="version">2.0.0 - Blue-Green Ready ya merito</span></p>
+        <p>Versión: <span className="version">2.0.0 - Blue-Green Ready ya merito meritooo</span></p>
         <button className="counter-btn" onClick={handleClick}>
           Haz clic para incrementar
         </button>
