@@ -41,6 +41,8 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            VERSION=${{ github.sha }}
 
   deploy-green:
     runs-on: ubuntu-latest
