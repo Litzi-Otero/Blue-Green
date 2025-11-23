@@ -52,7 +52,7 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /root/Blue-Green
+            cd /home/litzi/Blue-Green
             docker compose pull
             docker compose up -d
             echo "Deploy completo!"
