@@ -18,21 +18,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build blue (v1)
+      # Build BLUE
       - name: Build & Push BLUE (v1)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          build-args: |
+            VERSION=v1
           tags: |
             ${{ secrets.IMAGE_NAME }}:v1
 
-      # Build green (v2)
+      # Build GREEN
       - name: Build & Push GREEN (v2)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          build-args: |
+            VERSION=v2
           tags: |
             ${{ secrets.IMAGE_NAME }}:v2
 
