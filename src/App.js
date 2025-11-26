@@ -9,7 +9,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Bienvenido a mi App - Litzi Otero</h1>
+        <h1>Bienvenido - Litzi Otero</h1>
 
         <p>
           Ambiente activo:{" "}
