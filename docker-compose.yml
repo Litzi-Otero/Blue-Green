@@ -10,11 +10,11 @@ services:
       - green
 
   blue:
-    image: ${IMAGE_NAME}:${BLUE_VERSION}
+    image: litzi123/vobe:v1
     expose:
       - "8080"
 
   green:
-    image: ${IMAGE_NAME}:${GREEN_VERSION}
+    image: litzi123/vobe:v2
     expose:
       - "8080"
