@@ -1,24 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
 function App() {
   const [count, setCount] = useState(0);
-  const [env, setEnv] = useState("...");
 
-  useEffect(() => {
-    fetch("/version.txt")
-      .then(res => res.text())
-      .then(text => {
-        if (text.includes("v1")) setEnv("BLUE");
-        else if (text.includes("v2")) setEnv("GREEN");
-        else setEnv("UNKNOWN");
-      })
-      .catch(() => setEnv("ERROR"));
-  }, []);
-
-  const handleClick = () => {
-    setCount(count + 1);
-  };
+  const ENV = process.env.REACT_APP_ENV || "UNKNOWN";
 
   return (
     <div className="App">
@@ -27,19 +13,24 @@ function App() {
 
         <p>
           Ambiente activo:{" "}
-          <span style={{ 
-            fontWeight: "bold", 
-            color: env === "BLUE" ? "#3498db" : env === "GREEN" ? "#2ecc71" : "#e74c3c"
-          }}>
-            {env}
+          <span
+            style={{
+              fontWeight: "bold",
+              color:
+                ENV === "BLUE" ? "#3498db" :
+                ENV === "GREEN" ? "#2ecc71" :
+                "#e74c3c"
+            }}
+          >
+            {ENV}
           </span>
         </p>
 
-        <button className="counter-btn" onClick={handleClick}>
+        <button onClick={() => setCount(count + 1)}>
           Haz clic para incrementar
         </button>
 
-        <p>Contador: <span className="counter">{count}</span></p>
+        <p>Contador: {count}</p>
       </header>
     </div>
   );
