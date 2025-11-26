@@ -12,9 +12,9 @@ services:
   blue:
     image: litzi123/vobe:v1
     expose:
-      - "8080"
+      - "80"
 
   green:
     image: litzi123/vobe:v2
     expose:
-      - "8080"
+      - "80"
