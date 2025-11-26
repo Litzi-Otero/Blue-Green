@@ -1,4 +1,4 @@
-name: CI/CD Blue-Green Auto-Switch
+name: CI/CD Blue-Green
 
 on:
   push:
@@ -18,23 +18,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build BLUE
-      - name: Build BLUE (v1)
+      - name: Build & Push GREEN
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          build-args: VERSION=v1
-          tags: |
-            ${{ secrets.IMAGE_NAME }}:v1
-
-      # Build GREEN
-      - name: Build GREEN (v2)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          build-args: VERSION=v2
           tags: |
             ${{ secrets.IMAGE_NAME }}:v2
 
@@ -43,31 +31,13 @@ jobs:
     needs: build
 
     steps:
-      - name: Auto deploy and switch Blue → Green
+      - name: Deploy & Switch
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USER }}
+          username: root
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /home/litzi/Blue-Green
-
-            echo ">>> Pulling latest images"
-            docker compose pull
-
-            echo ">>> Starting GREEN"
-            docker compose up -d green
-
-            sleep 5
-
-            echo ">>> Checking GREEN health..."
-            if curl -fs http://localhost:8080/version.txt > /dev/null; then
-              echo "GREEN OK -> switching to green"
-
-              sed -i "s/proxy_pass http:\/\/blue_backend;/proxy_pass http:\/\/green_backend;/" nginx.conf
-              docker compose restart nginx
-            else
-              echo "GREEN FAILED -> keeping BLUE online"
-            fi
-
-            echo "Deploy + Auto-switch completed!"
+            cd /home/litzi/Blue-Green/scripts
+            ./deploy-green.sh
+            ./test-green.sh && ./switch.sh

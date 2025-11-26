@@ -1,4 +1,13 @@
 #!/bin/bash
-sed -i "s/proxy_pass http:\/\/green_backend;/proxy_pass http:\/\/blue_backend;/" nginx.conf
-docker compose restart nginx
-echo "Rollback completo → Blue activo"
+
+set -e
+
+source ../.env
+
+# Restaura config backup
+cp nginx.conf.backup nginx.conf
+
+# Reload
+docker-compose restart nginx
+
+echo "Rollback completado! Blue ahora es live."
