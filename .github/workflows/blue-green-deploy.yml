@@ -3,9 +3,19 @@ name: CI/CD Blue-Green
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      color:
+        description: "Selecciona quién estará en vivo (blue/green)"
+        required: false
+        type: choice
+        options:
+          - blue
+          - green
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -18,26 +28,67 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & Push GREEN
+      # Build BLUE
+      - name: Build & Push BLUE (v1)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          build-args: |
+            VERSION=v1
+          tags: |
+            ${{ secrets.IMAGE_NAME }}:v1
+
+      # Build GREEN
+      - name: Build & Push GREEN (v2)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VERSION=v2
           tags: |
             ${{ secrets.IMAGE_NAME }}:v2
 
   deploy:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Deploy & Switch
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DO_HOST }}
-          username: root
+          username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /home/litzi/Blue-Green/scripts
-            ./deploy-green.sh
-            ./test-green.sh && ./switch.sh
+            cd /home/litzi/Blue-Green
+            docker compose pull
+            docker compose up -d
+            echo "Deploy completo!"
+
+  switch:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ejecutar switch en VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /home/litzi/Blue-Green
+
+            if [ "${{ github.event.inputs.color }}" = "blue" ]; then
+              echo "🔵 Activando BLUE..."
+              sed -i 's/default green_backend;/default blue_backend;/' nginx.conf
+            else
+              echo "🟢 Activando GREEN..."
+              sed -i 's/default blue_backend;/default green_backend;/' nginx.conf
+            fi
+
+            docker compose restart nginx
+            echo "✔️ Switch completado → ${{ github.event.inputs.color }}"
