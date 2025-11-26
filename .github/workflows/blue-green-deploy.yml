@@ -36,6 +36,7 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /home/litzi/Blue-Green
+            cd /home/litzi/Blue-Green/scripts
+            chmod +x *.sh
             ./deploy_green.sh
             ./switch_to_green.sh
