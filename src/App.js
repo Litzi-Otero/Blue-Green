@@ -1,36 +1,28 @@
-import React, { useState } from 'react';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [env, setEnv] = useState("DESCONOCIDO");
 
-  const ENV = process.env.REACT_APP_ENV || "UNKNOWN";
+  useEffect(() => {
+    fetch("/version.txt")
+      .then((res) => res.text())
+      .then((txt) => {
+        if (txt.includes("v1")) setEnv("BLUE");
+        else if (txt.includes("v2")) setEnv("GREEN");
+        else setEnv("UNKNOWN");
+      });
+  }, []);
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>Bienvenido a mi App - Litzi Otero</h1>
-
-        <p>
-          Ambiente activo:{" "}
-          <span
-            style={{
-              fontWeight: "bold",
-              color:
-                ENV === "BLUE" ? "#3498db" :
-                ENV === "GREEN" ? "#2ecc71" :
-                "#e74c3c"
-            }}
-          >
-            {ENV}
-          </span>
+        <p>Entorno activo: 
+          <strong style={{ color: env === "BLUE" ? "dodgerblue" : "limegreen" }}>
+            {env}
+          </strong>
         </p>
-
-        <button onClick={() => setCount(count + 1)}>
-          Haz clic para incrementar
-        </button>
-
-        <p>Contador: {count}</p>
       </header>
     </div>
   );

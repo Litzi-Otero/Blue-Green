@@ -1,4 +1,4 @@
-name: CI/CD Blue-Green
+name: CI/CD Blue-Green Auto-Switch
 
 on:
   push:
@@ -18,29 +18,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # =======================
-      # BUILD BLUE (v1)
-      # =======================
-      - name: Build & Push BLUE
+      # Build BLUE
+      - name: Build BLUE (v1)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          build-args: |
-            VERSION=BLUE
+          build-args: VERSION=v1
           tags: |
             ${{ secrets.IMAGE_NAME }}:v1
 
-      # =======================
-      # BUILD GREEN (v2)
-      # =======================
-      - name: Build & Push GREEN
+      # Build GREEN
+      - name: Build GREEN (v2)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          build-args: |
-            VERSION=GREEN
+          build-args: VERSION=v2
           tags: |
             ${{ secrets.IMAGE_NAME }}:v2
 
@@ -49,7 +43,7 @@ jobs:
     needs: build
 
     steps:
-      - name: Deploy to VPS
+      - name: Auto deploy and switch Blue → Green
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DO_HOST }}
@@ -57,6 +51,23 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             cd /home/litzi/Blue-Green
+
+            echo ">>> Pulling latest images"
             docker compose pull
-            docker compose up -d
-            echo "Deploy completo!"
+
+            echo ">>> Starting GREEN"
+            docker compose up -d green
+
+            sleep 5
+
+            echo ">>> Checking GREEN health..."
+            if curl -fs http://localhost:8080/version.txt > /dev/null; then
+              echo "GREEN OK -> switching to green"
+
+              sed -i "s/proxy_pass http:\/\/blue_backend;/proxy_pass http:\/\/green_backend;/" nginx.conf
+              docker compose restart nginx
+            else
+              echo "GREEN FAILED -> keeping BLUE online"
+            fi
+
+            echo "Deploy + Auto-switch completed!"
