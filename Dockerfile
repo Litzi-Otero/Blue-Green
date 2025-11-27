@@ -19,4 +19,6 @@ COPY default.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 LABEL version=${VERSION}
 
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD /bin/sh -c 'test -f /var/run/nginx.pid'
+
 CMD ["nginx", "-g", "daemon off;"]
