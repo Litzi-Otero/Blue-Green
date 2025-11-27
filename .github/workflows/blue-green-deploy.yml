@@ -18,13 +18,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & Push Image
-        uses: docker/build-push-action@v6
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.IMAGE_NAME }}:${{ github.run_number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/vobe:${{ github.run_number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/vobe:v2  # Tag específico en lugar de latest
 
       - name: Save Image Tag
         run: echo "TAG=${{ github.run_number }}" >> $GITHUB_ENV
