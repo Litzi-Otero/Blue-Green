@@ -47,7 +47,7 @@ function App() {
         </p>
 
         <button className="counter-btn" onClick={handleClick}>
-          Haz clic para incrementar
+          Haz clic para incrementarr
         </button>
 
         <p>Contador: <span className="counter">{count}</span></p>
