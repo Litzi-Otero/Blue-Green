@@ -1,16 +1,23 @@
-name: CI/CD Blue-Green
+# .github/workflows/deploy.yml
+name: Deploy Blue-Green
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      IMAGE_NAME: vobe
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -24,19 +31,11 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/vobe:${{ github.run_number }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/vobe:v2  # Tag específico en lugar de latest
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Save Image Tag
-        run: echo "TAG=${{ github.run_number }}" >> $GITHUB_ENV
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-  
-    steps:
-      - name: Get Image Tag
-        run: echo "TAG=${{ github.run_number }}" >> $GITHUB_ENV
-  
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -45,7 +44,16 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             set -e
-            echo "Conectado al servidor 🚀"
+            echo "🚀 Iniciando deployment..."
+            
+            # Configurar variables
+            DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+            IMAGE_NAME="vobe"
+            IMAGE_TAG="${{ github.sha }}"
+            FULL_IMAGE="$DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG"
+            
+            echo "Usando imagen: $FULL_IMAGE"
+            
+            # Ejecutar deployment
             cd /home/litzi/Blue-Green
-            echo "Ejecutando deployment Blue/Green..."
-            bash scripts/deploy.sh $TAG
+            bash scripts/deploy.sh "$FULL_IMAGE"
