@@ -6,14 +6,25 @@ function App() {
   const [env, setEnv] = useState("...");
 
   useEffect(() => {
-    fetch("/version.txt")
-      .then(res => res.text())
-      .then(text => {
-        if (text.includes("v1")) setEnv("BLUE");
-        else if (text.includes("v2")) setEnv("GREEN");
-        else setEnv("UNKNOWN");
+    fetch("/healthz")
+      .then(res => {
+        const backend = res.headers.get('X-Active-Backend') || '';
+        if (backend.includes('blue')) setEnv('BLUE');
+        else if (backend.includes('green')) setEnv('GREEN');
+        else return fetch('/version.txt');
+        return null;
       })
-      .catch(() => setEnv("ERROR"));
+      .then(next => {
+        if (!next) return;
+        return next.text();
+      })
+      .then(text => {
+        if (!text) return;
+        if (text.includes('v1')) setEnv('BLUE');
+        else if (text.includes('v2')) setEnv('GREEN');
+        else setEnv('UNKNOWN');
+      })
+      .catch(() => setEnv('ERROR'));
   }, []);
 
   const handleClick = () => {
