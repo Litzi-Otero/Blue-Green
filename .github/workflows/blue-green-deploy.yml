@@ -1,22 +1,50 @@
-deploy:
-  runs-on: ubuntu-latest
-  needs: build
+name: CI/CD Blue-Green
 
-  steps:
-    - name: Get Image Tag
-      run: echo "TAG=${{ github.run_number }}" >> $GITHUB_ENV
+on:
+  push:
+    branches: [ "main" ]
 
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.DO_HOST }}
-        username: ${{ secrets.DO_USER }}
-        key: ${{ secrets.DO_SSH_KEY }}
-        script: |
-          set -e
-          echo "Conectado al servidor 🚀"
-          cd /home/litzi/Blue-Green
-          echo "Actualizando imagenes Docker 🔄"
-          docker compose pull
-          echo "Ejecutando script Blue/Green automático"
-          bash scripts/deploy.sh $TAG
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.IMAGE_NAME }}:${{ github.run_number }}
+
+      - name: Save Image Tag
+        run: echo "TAG=${{ github.run_number }}" >> $GITHUB_ENV
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+  
+    steps:
+      - name: Get Image Tag
+        run: echo "TAG=${{ github.run_number }}" >> $GITHUB_ENV
+  
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            set -e
+            echo "Conectado al servidor 🚀"
+            cd /home/litzi/Blue-Green
+            echo "Ejecutando deployment Blue/Green..."
+            bash scripts/deploy.sh $TAG
