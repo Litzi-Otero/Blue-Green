@@ -14,7 +14,7 @@ FROM nginx:alpine
 ARG VERSION
 
 COPY --from=build /app/build /usr/share/nginx/html
-COPY default.conf /etc/nginx/conf.d/default.conf
+RUN echo "ok" > /usr/share/nginx/html/healthz
 
 EXPOSE 80
 LABEL version=${VERSION}
